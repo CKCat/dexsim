@@ -102,22 +102,19 @@ def main(args):
         return
 
     smali_dir = None
+    tempdir = None
     if get_value('DEBUG_MODE'):
         smali_dir = os.path.join(os.path.abspath(os.curdir), 'zzz')
+        tempdir = os.path.join(os.path.abspath(os.curdir), 'tmp_dir')
+        if not os.path.exists(tempdir):
+            os.mkdir(tempdir)
     else:
         smali_dir = tempfile.mkdtemp()
-    
+        tempdir = tempfile.mkdtemp()
+
     dex_file = None
+    apk_path = args.f
     if Magic(args.f).get_type() == 'apk':
-        apk_path = args.f
-
-        if get_value('DEBUG_MODE'):
-            tempdir = os.path.join(os.path.abspath(os.curdir), 'tmp_dir')
-            if not os.path.exists(tempdir):
-                os.mkdir(tempdir)
-        else:
-            tempdir = tempfile.mkdtemp()
-
         ptn = re.compile(r'classes\d*.dex')
 
         zipFile = zipfile.ZipFile(apk_path)
@@ -130,12 +127,16 @@ def main(args):
         dex_file = os.path.join(tempdir, 'new.dex')
 
         smali(smali_dir, dex_file)
-        dexsim_apk(args.f, smali_dir, includes, output_dex)
-        if not get_value('DEBUG_MODE'):
-            shutil.rmtree(tempdir)
-
+    elif Magic(args.f).get_type() == 'dex':
+        baksmali(apk_path, smali_dir)
     else:
         print("Please give A apk.")
+
+    dexsim_apk(args.f, smali_dir, includes, output_dex)
+    if not get_value('DEBUG_MODE'):
+        shutil.rmtree(tempdir)
+
+
 
 
 if __name__ == "__main__":

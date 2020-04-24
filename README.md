@@ -16,7 +16,7 @@
 - baksmali - 用于把apk／dex文件反编译为smali
 - adb - 用于push文件到手机／模拟器
 - 安装依赖 - `pip install -r requirements.txt`
-- 安装服务端 - `adb install -t server/dss.apk`
+- 安装服务端 - `adb install server/dss.apk`
 
 ## 用法
 
@@ -25,7 +25,7 @@
   ```
   $ adb shell
   $ su
-  # cd /data/local
+  # cd /data/local/tmp
   # mkdir dss dss_data
   # ll
   drwxrwxrwx root     root              2018-02-05 15:22 dss

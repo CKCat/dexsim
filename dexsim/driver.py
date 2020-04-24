@@ -5,38 +5,45 @@ import tempfile
 from dexsim import get_value
 from pyadb3 import ADB
 
-DSS_PATH = '/data/local/dss'
-DSS_APK_PATH = '/data/local/dss/tmp.apk'
-DSS_DATA_PATH = '/data/local/dss_data'
-DSS_OUTPUT_PATH = '/data/local/dss_data/od-output.json'
-DSS_TARGETS_PATH = '/data/local/dss_data/od-targets.json'
-DSS_EXCEPTION_PATH = '/data/local/dss_data/od-targets.json'
+DSS_PATH = '/sdcard/dss'
+DSS_APK_PATH = '/sdcard/dss/tmp.dex'
+DSS_DATA_PATH = '/sdcard/dss_data'
+DSS_OUTPUT_PATH = '/sdcard/dss_data/od-output.json'
+DSS_TARGETS_PATH = '/sdcard/dss_data/od-targets.json'
+DSS_EXCEPTION_PATH = '/sdcard/dss_data/od-targets.json'
 
 
 class Driver:
 
     def __init__(self):
         """Init adb and command.
-
-        export CLASSPATH=/data/local/od.zip;
-        app_process /system/bin org.cf.oracle.Driver
-        @/data/local/od-targets.json;
         """
         self.cmd_dss_start = ['am', 'startservice',
+                              'me.mikusjelly.dss/.DSService']
+        self.cmd_dss_start_foreground = ['am', ' start-foreground-service',
                               'me.mikusjelly.dss/.DSService']
         self.cmd_dss_stop = ['am', 'force-stop', 'me.mikusjelly.dss']
         self.cmd_dss = ['am', 'broadcast', '-a', 'dss.start']
 
-        self.cmd_get_finish = ['cat', '/data/local/dss_data/finish']
+        self.cmd_get_finish = ['cat', '/sdcard/dss_data/finish']
         self.cmd_set_finish = ['echo', 'No', '>',
-                               '/data/local/dss_data/finish']
-        self.cmd_set_new = ['echo', 'Yes', '>', '/data/local/dss_data/new']
+                               '/sdcard/dss_data/finish']
+        self.cmd_set_new = ['echo', 'Yes', '>', '/sdcard/dss_data/new']
+
+        self.get_sdk_int = ['getprop', 'ro.build.version.sdk']
 
         self.adb = ADB()
+        self.sdk_int = self.adb.run_shell_cmd(self.get_sdk_int)
+        self.sdk_int = self.sdk_int.decode(encoding='utf-8').strip()
+        self.sdk_int = int(self.sdk_int)
+
         self.adb.run_shell_cmd(self.cmd_set_new)
 
     def start_dss(self):
-        self.adb.run_shell_cmd(self.cmd_dss_start)
+        if self.sdk_int > 25:
+            self.adb.run_shell_cmd(self.cmd_dss_start_foreground)
+        else:
+            self.adb.run_shell_cmd(self.cmd_dss_start)
 
     def stop_dss(self):
         self.adb.run_shell_cmd(self.cmd_dss_stop)
@@ -64,7 +71,7 @@ class Driver:
             if 'Yes' in output:
                 break
 
-            if counter > 120:
+            if counter > 1200:
                 print("Time out")
                 self.stop_dss()
                 return
@@ -93,8 +100,8 @@ class Driver:
             self.adb.run_shell_cmd(['rm', DSS_TARGETS_PATH])
         else:
             self.adb.run_shell_cmd(['pull', DSS_TARGETS_PATH])
-        os.unlink(output_path)
-
+        # os.unlink(output_path)
+        print(output_path)
         self.stop_dss()
 
         return result

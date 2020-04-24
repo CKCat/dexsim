@@ -85,16 +85,17 @@ class ht1021(Plugin):
         self.decode()
 
     def _process_mtd(self, mtd, ptn):
-        if get_value('DEBUG_MODE'):
-            print('\n', '+' * 100)
-            print('Starting to decode ...')
-            print(Color.green(mtd))
+        # if get_value('DEBUG_MODE'):
+        #     print('\n', '+' * 80)
+        #     print('Starting to decode ...')
+        #     print(Color.green(mtd))
 
         body = mtd.get_body()
 
         for item in ptn.finditer(body):
             old_content = item.group()  # 匹配到的内容，用来替换
             arg, cname, mname, rtn_name = item.groups()
+            # print("class, method, ret, arg:", cname, mname, rtn_name, arg)
             arguments = ['java.lang.String:' + arg]
             json_item = self.get_json_item(cname, mname, arguments)
             self.append_json_item(json_item, mtd, old_content, rtn_name)
@@ -121,9 +122,11 @@ class ht1021(Plugin):
             for mtd, old_content, new_content in self.target_contexts[key]:
                 old_body = mtd.get_body()
                 new_content = old_content + "\n" + new_content.format(value[0])
+                print(new_content)
                 body = old_body.replace(old_content, new_content)
                 mtd.set_body(body)
                 self.make_changes = True
+                mtd.set_modified(True)
               
 
         self.smali_files_update()
